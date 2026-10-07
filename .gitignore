@@ -10,3 +10,5 @@ last_error.txt
 log_*.log
 .cursorrules
 _Phase*
+/dccm/
+dccm.zip
