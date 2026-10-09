@@ -196,14 +196,17 @@ internal static class DownedHostExitPrompt
         UiChrome.DrawRaisedPlate(graphics, x, y, w, h, 10.0 * uiScale, 0x2A3A5E, face, highlight, enabled: true);
 
         var text = Assets.Class.makeText(label.AsHaxeString(), Tools.MultiColor.ColorFromHex("#ffffff"), false, parent);
-        text.customScale = 0.40 * uiScale;
+        text.customScale = 0.64 * uiScale;
         text.onResize();
         text.textColor = 0xFFFFFF;
         double textW;
         try { textW = text.textWidth * (text.scaleX > 0.01 ? text.scaleX : text.customScale); }
         catch { textW = label.Length * 7.0 * uiScale; }
+        double textH;
+        try { textH = text.textHeight * (text.scaleY > 0.01 ? text.scaleY : text.customScale); }
+        catch { textH = 24.0 * uiScale; }
         text.x = x + System.Math.Max(0, (w - textW) * 0.5);
-        text.y = y + (h - 20.0 * uiScale) * 0.5;
+        text.y = y + (h - textH) * 0.5;
 
         var hit = new Interactive(w, h, parent, null);
         hit.x = x;
