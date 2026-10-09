@@ -512,3 +512,15 @@ msgstr ""
 #: Multiplayer online sync hardening
 msgid "Level failed to synchronize with the host. Return to the menu and rejoin."
 msgstr ""
+
+msgid "Leave multiplayer run?"
+msgstr ""
+
+msgid "Disconnect and return to the title screen?"
+msgstr ""
+
+msgid "Leave multiplayer"
+msgstr ""
+
+msgid "Press Enter or click Leave to confirm. Press Esc to cancel."
+msgstr ""

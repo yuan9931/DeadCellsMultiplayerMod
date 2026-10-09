@@ -82,6 +82,10 @@ namespace DeadCellsMultiplayerMod
         {
             if (e == null || e.kind == null)
                 return;
+
+            if (DownedHostExitPrompt.HandleWindowEvent(e))
+                return;
+
             if (e.kind.Index != EventKind.Indexes.ETextInput)
                 return;
             if (IsCameraCycleTextInputBlocked())

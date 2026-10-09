@@ -516,3 +516,15 @@ msgstr "合作进度已同步：+{0} 项解锁"
 #: Multiplayer online sync hardening
 msgid "Level failed to synchronize with the host. Return to the menu and rejoin."
 msgstr "关卡未能与主机同步。请返回菜单并重新加入。"
+
+msgid "Leave multiplayer run?"
+msgstr "退出多人游戏？"
+
+msgid "Disconnect and return to the title screen?"
+msgstr "断开连接并返回标题画面？"
+
+msgid "Leave multiplayer"
+msgstr "退出多人游戏"
+
+msgid "Press Enter or click Leave to confirm. Press Esc to cancel."
+msgstr "按 Enter 或点击“退出多人游戏”确认；按 Esc 取消。"
