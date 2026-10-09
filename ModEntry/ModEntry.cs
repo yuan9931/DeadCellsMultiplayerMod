@@ -979,6 +979,8 @@ namespace DeadCellsMultiplayerMod
         private void hook_boot_update(Hook_Boot.orig_update orig, Boot self, double dt)
         {
             orig(self, dt);
+            if (DownedHostExitPrompt.Update())
+                return;
             PumpSteamCallbacksForOverlay();
             MainThreadPump.ProcessMainThreadQueue();
             LobbySession.HandleTextInputClipboardShortcuts();
