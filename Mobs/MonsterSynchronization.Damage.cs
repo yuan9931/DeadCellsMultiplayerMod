@@ -72,105 +72,35 @@ namespace DeadCellsMultiplayerMod.Mobs.MobsSynchronization
                 if (net == null)
                     return;
 
-                if (!IsSyncMob(self) && !preSyncOk)
-                    return;
-
                 var isClient = IsClient(net);
                 var suppressedClientLethal = isClient && WasClientMobDeathSuppressed(self);
                 var tookLifeDelta = self.life < preDamageLife || suppressedClientLethal;
                 var becameDead = self.life <= 0 || suppressedClientLethal;
-                bool shouldReport = false;
-                if (IsHost(net))
+                if (isClient)
                 {
-                    shouldReport = true;
-                }
-                else if (isClient)
-                {
-                    shouldReport = IsDamageFromLocalPlayer(i);
-                    // Fallback for damage-source edge cases: never drop a lethal hit report.
-                    if (!shouldReport && tookLifeDelta && becameDead)
-                        shouldReport = true;
-                }
-
-                if (!shouldReport)
-                    return;
-
-                if (System.Threading.Volatile.Read(ref suppressMobHitSendDepth) > 0)
-                    return;
-
-                if (!TryGetMobSyncId(self, out var mobSyncId))
-                {
-                    if (!preSyncOk || !shouldReport)
-                        return;
-                    mobSyncId = cachedMobSyncId;
-                }
-
-                // NetId 0 is reserved. Never report damage against it — that is the courtyard
-                // syncId=0 thrash vector once the real owner was gone.
-                if (mobSyncId <= 0)
-                    return;
-
-                // A locally lethal client hit temporarily restores the mob so the client does not
-                // run an unsanctioned death. Still report life=0 to the host; reporting the restored
-                // value (usually 1) was the source of elites becoming permanently unkillable.
-                var life = suppressedClientLethal ? 0 : GetMobLifeOrFallback(self, 0);
-                var damageHint = isClient && shouldReport
-                    ? EstimateClientAttackDamageHint(attackIntentDamage, preDamageLife, life, suppressedClientLethal)
-                    : 0.0;
-                var x = GetSyncX(self);
-                var y = GetSyncY(self);
-                var mobType = BuildMobStateTypeSignature(self);
-
-                if (IsHost(net))
-                {
-                    var hx = GetWorldX(self);
-                    var hy = GetWorldY(self);
-                    var hitEvent = $"hit|{life.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
-                    if (TryGetCurrentLevelIdentityToken(out var identityToken))
-                    {
-                        var update = new NetNode.MobEventUpdate(mobSyncId, hx, hy, NormalizeDir(self.dir), SingleEvent(hitEvent), mobType, identityToken);
-                        MobSyncTrace.LogSendMobEvents(MobSyncNetRoleForTrace(net), SingleUpdate(update));
-                        net.SendMobEvents(SingleUpdate(update));
-                    }
-                }
-
-                if (IsClient(net))
-                {
+                    var heroDamageSuppressed = false;
                     lock (Sync)
                     {
                         if (!clientLastReportedMobLife.TryGetValue(self, out var lastLife))
                         {
-                            // First locally-confirmed hit for this tracked mob: establish baseline and
-                            // propagate immediately when damage actually reduced life.
-                            clientLastReportedMobLife[self] = life;
-                            var maxLife = self.maxLife;
-                            if (life >= maxLife && life > 0 && damageHint <= 0.0)
-                                return;
+                            clientLastReportedMobLife[self] = self.life;
+                            heroDamageSuppressed = self.life >= self.maxLife && self.life > 0;
                         }
                         else
                         {
-                            // Never drop a killing blow: stale lastLife or host sync can make life look non-decreasing.
-                            if (life >= lastLife)
+                            if (self.life >= lastLife)
                             {
-                                var lethalReport = shouldReport && life <= 0 && lastLife > 0 && preDamageLife > 0;
-                                var authoritativeProbe = shouldReport && damageHint > 0.0;
-                                if (!lethalReport && !authoritativeProbe)
-                                    return;
+                                var lethalReport = self.life <= 0 && lastLife > 0 && preDamageLife > 0;
+                                if (!lethalReport)
+                                    heroDamageSuppressed = true;
                             }
 
-                            clientLastReportedMobLife[self] = life;
+                            clientLastReportedMobLife[self] = self.life;
                         }
                     }
 
-                    var clientHitEvent = string.Create(
-                        System.Globalization.CultureInfo.InvariantCulture,
-                        $"hit|{life}|{damageHint:R}");
-                    if (TryGetCurrentLevelIdentityToken(out var identityToken))
-                    {
-                        var clientUpdate = new NetNode.MobEventUpdate(mobSyncId, x, y, 0, SingleEvent(clientHitEvent), mobType, identityToken);
-                        MobSyncTrace.LogSendMobEvents(MobSyncNetRoleForTrace(net), SingleUpdate(clientUpdate));
-                        net.SendMobEvents(SingleUpdate(clientUpdate));
-                    }
+                    if (heroDamageSuppressed)
+                        return;
                 }
             }
             finally

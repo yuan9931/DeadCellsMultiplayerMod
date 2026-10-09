@@ -126,9 +126,15 @@ namespace DeadCellsMultiplayerMod
             }
 
             if (_netRole != NetRole.None && me != null && ReferenceEquals(self, me))
+            {
                 RecordLocalDamageContext(disengageRatio);
+                LogHeroDamageTaken("onDamage-start", self, disengageRatio);
+            }
 
             orig(self, disengageRatio);
+
+            if (_netRole != NetRole.None && me != null && ReferenceEquals(self, me))
+                LogHeroDamageTaken("onDamage-result", self, disengageRatio);
         }
 
         private void Hook_Hero_checkCursedWeaponHit(Hook_Hero.orig_checkCursedWeaponHit orig, Hero self, AttackData a)
