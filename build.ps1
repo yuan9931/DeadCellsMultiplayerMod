@@ -6,18 +6,27 @@ $env:GITHUB_WORKSPACE = (Get-Location).Path
 # 公开仓库可以不设；如果遇到 rate limit 或私有仓库，设一个 PAT
 # $env:GH_TOKEN = "ghp_xxx"
 
-$headers = @{ Accept = "application/vnd.github+json" }
-if ($env:GH_TOKEN) {
-  $headers.Authorization = "Bearer $env:GH_TOKEN"
+
+
+
+if (Test-Path dccm) { }
+else
+{
+  
+    $headers = @{ Accept = "application/vnd.github+json" }
+  if ($env:GH_TOKEN) {
+    $headers.Authorization = "Bearer $env:GH_TOKEN"
+  }
+
+  $release = Invoke-RestMethod -Uri "https://api.github.com/repos/dead-cells-core-modding/core/releases/latest" -Headers $headers
+  $asset = $release.assets | Where-Object { $_.name -eq 'win-x64.zip' } | Select-Object -First 1
+  if (-not $asset) { throw "未找到 win-x64.zip" }
+
+  Invoke-WebRequest -Uri $asset.browser_download_url -Headers $headers -OutFile dccm.zip
+
+  Expand-Archive -Path dccm.zip -DestinationPath dccm -Force
 }
 
-$release = Invoke-RestMethod -Uri "https://api.github.com/repos/dead-cells-core-modding/core/releases/latest" -Headers $headers
-$asset = $release.assets | Where-Object { $_.name -eq 'win-x64.zip' } | Select-Object -First 1
-if (-not $asset) { throw "未找到 win-x64.zip" }
-
-Invoke-WebRequest -Uri $asset.browser_download_url -Headers $headers -OutFile dccm.zip
-if (Test-Path dccm) { Remove-Item dccm -Recurse -Force }
-Expand-Archive -Path dccm.zip -DestinationPath dccm -Force
 
 $mdkRoot = Join-Path $env:GITHUB_WORKSPACE 'dccm/core/mdk'
 $env:DCCM_MDK_ROOT = $mdkRoot
