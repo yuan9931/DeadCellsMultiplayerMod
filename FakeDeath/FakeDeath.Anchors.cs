@@ -67,6 +67,115 @@ namespace DeadCellsMultiplayerMod
                 InvalidateRecentSafeReviveAnchors(now, SafeAnchorEnvironmentalPurgeSeconds);
         }
 
+        private static double ReadAttackDamageValue(AttackData? attack)
+        {
+            if (attack == null)
+                return 0.0;
+
+            try
+            {
+                object? rawBaseDmg = attack.baseDmg;
+                if (TryConvertAttackDamageScalar(rawBaseDmg, out var baseDmg))
+                    return baseDmg;
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                if (TryConvertAttackDamageScalar(attack.rawFinalDmg, out var rawFinalDmg))
+                    return rawFinalDmg;
+            }
+            catch
+            {
+            }
+
+            return 0.0;
+        }
+
+        private static bool TryConvertAttackDamageScalar(object? raw, out double value)
+        {
+            value = 0.0;
+            if (raw == null)
+                return false;
+
+            try
+            {
+                value = Convert.ToDouble(raw, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+                return false;
+            }
+
+            if (!double.IsFinite(value) || value <= 0.0)
+            {
+                value = 0.0;
+                return false;
+            }
+
+            return true;
+        }
+
+        private static string DescribeDamageSource(AttackData? attack)
+        {
+            if (attack == null)
+                return "null";
+
+            try
+            {
+                var source = attack.source;
+                if (source == null)
+                    return "source=null";
+
+                var typeName = source.GetType().Name ?? string.Empty;
+                if (source is Mob)
+                    return $"Mob:{typeName}";
+                if (source is Hero)
+                    return $"Hero:{typeName}";
+
+                return typeName;
+            }
+            catch
+            {
+                return "source=unavailable";
+            }
+        }
+
+        private static int SafeHeroLife(Hero? hero)
+        {
+            try { return hero?.life ?? -1; }
+            catch { return -1; }
+        }
+
+        private static int SafeHeroMaxLife(Hero? hero)
+        {
+            try { return hero?.maxLife ?? -1; }
+            catch { return -1; }
+        }
+
+        private void LogHeroDamageTaken(string phase, Hero? hero, AttackData? attack)
+        {
+            if (_netRole == NetRole.None || hero == null || me == null || !ReferenceEquals(hero, me))
+                return;
+
+            var source = DescribeDamageSource(attack);
+            var intentDamage = ReadAttackDamageValue(attack);
+            var environmental = IsEnvironmentalDamageSource(attack);
+
+            Logger.Information(
+                "[HeroDamage] taken {Phase} role={Role} life={Life} maxLife={MaxLife} source={Source} intentDamage={IntentDamage} environmental={Environmental} localDamageWasEnvironmental={LocalDamageWasEnvironmental}",
+                phase ?? string.Empty,
+                _netRole,
+                SafeHeroLife(hero),
+                SafeHeroMaxLife(hero),
+                source,
+                intentDamage,
+                environmental,
+                _lastLocalDamageWasEnvironmental);
+        }
+
         private void InvalidateRecentSafeReviveAnchors(long now, double seconds)
         {
             if (_safeReviveAnchorCount <= 0 || seconds <= 0.0)

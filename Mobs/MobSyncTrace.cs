@@ -176,6 +176,27 @@ internal static class MobSyncTrace
             attacks.Count,
             minId,
             maxId);
+
+        for (var i = 0; i < attacks.Count; i++)
+        {
+            var attack = attacks[i];
+            Log.Information(
+                "[MobSync] ← RECV attack {Context} idx={Index} gen={Generation} skillId={SkillId} requiresTargetInArea={RequiresTargetInArea} data={Data} x={X} y={Y} targetUserId={TargetUserId} dir={Dir} blockSeconds={BlockSeconds} forcedDirSeconds={ForcedDirSeconds} type={MobType} attackSeq={AttackSeq}",
+                context,
+                attack.Index,
+                attack.Generation,
+                attack.SkillId ?? string.Empty,
+                attack.RequiresTargetInArea,
+                attack.Data.HasValue ? attack.Data.Value : -1,
+                attack.X,
+                attack.Y,
+                attack.TargetUserId,
+                attack.Dir,
+                attack.BlockSeconds,
+                attack.ForcedDirSeconds,
+                attack.Type ?? string.Empty,
+                attack.AttackSeq);
+        }
     }
 
     public static void LogRecvMoves(string context, IReadOnlyList<NetNode.MobMoveSnapshot> moves)
@@ -710,34 +731,6 @@ internal static class MobSyncTrace
             reason ?? string.Empty,
             System.Threading.Interlocked.Read(ref s_clientSpawnOk),
             System.Threading.Interlocked.Read(ref s_clientSpawnFail));
-    }
-
-    private static long s_lastDamageAppliedLogTick;
-
-    /// <summary>
-    /// Reports damage the host actually applied from a remote hit. hint=0 means the host used the
-    /// client's absolute HP result; hint&gt;0 means the host replayed that exact damage natively.
-    /// A stream of hint=1 lines is the signature of an unresolvable client damage estimate.
-    /// </summary>
-    public static void LogDamageApplied(bool isHost, int syncId, int hpBefore, int hpAfter, double hint, bool replayed)
-    {
-        if (!Enabled)
-            return;
-
-        var now = Environment.TickCount64;
-        var last = System.Threading.Interlocked.Read(ref s_lastDamageAppliedLogTick);
-        if (last != 0 && now - last < 1000)
-            return;
-        System.Threading.Interlocked.Exchange(ref s_lastDamageAppliedLogTick, now);
-
-        Log.Information(
-            "[MobDamage] role={Role} syncId={SyncId} hpBefore={Before} hpAfter={After} hint={Hint} replayedNative={Replayed}",
-            isHost ? "host" : "client",
-            syncId,
-            hpBefore,
-            hpAfter,
-            hint,
-            replayed);
     }
 
     public static void LogIncomingMappingMismatch(

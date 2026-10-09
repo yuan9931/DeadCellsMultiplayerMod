@@ -892,7 +892,7 @@ namespace DeadCellsMultiplayerMod.Mobs.MobsSynchronization
 
             try
             {
-                MobSyncTrace.LogRecvAttacks("hostAttacksFromHost", attacks);
+                MobSyncTrace.LogRecvAttacks(net.IsHost ? "hostAttacksFromHost" : "clientAttacksFromHost", attacks);
                 if (IsSyncQuiescedForTransition())
                     return;
                 ApplyIncomingHostMobAttacks(attacks);

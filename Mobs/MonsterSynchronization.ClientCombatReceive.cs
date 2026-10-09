@@ -268,8 +268,6 @@ namespace DeadCellsMultiplayerMod.Mobs.MobsSynchronization
                     var forceDie = targetLife <= 0 && prevLife > 0;
                     var syncId = -1;
                     TryGetMobSyncId(mob, out syncId);
-                    MobSyncTrace.LogIncomingHitApply(syncId, hit.Hp, hit.UserId, replaySpecialHit, forceDie);
-                    MobSyncTrace.LogDamageApplied(isHost, syncId, prevLife, targetLife, hit.DamageHint, replaySpecialHit);
                     s_pendingMobHitAppliesScratch.Add(new PendingMobHitApply(
                         mob,
                         hit.UserId,
