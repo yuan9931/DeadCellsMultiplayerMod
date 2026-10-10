@@ -17,6 +17,7 @@ namespace DeadCellsMultiplayerMod;
 /// </summary>
 internal static class DownedHostExitPrompt
 {
+    private const int KeySpace = 32;
     private const int KeyEscape = 27;
     private const int KeyEnter = 13;
 
@@ -59,7 +60,7 @@ internal static class DownedHostExitPrompt
             return true;
         }
 
-        if (_isOpen && e.keyCode == KeyEnter)
+        if (_isOpen && (e.keyCode == KeyEnter || e.keyCode == KeySpace))
         {
             if (_enterKeyHeld)
                 return true;
